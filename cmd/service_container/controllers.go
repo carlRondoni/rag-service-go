@@ -9,11 +9,13 @@ import (
 type Controllers struct {
 	HealthCheckController    controllers.HealthCheckController
 	LlmHealthCheckController controllers.LlmHealthCheckController
+	GenerateController       controllers.GenerateController
 }
 
 func NewControllers(handlers Handlers, logger zerolog.Logger) Controllers {
 	return Controllers{
 		HealthCheckController:    controllers.NewHealthCheckController(logger),
 		LlmHealthCheckController: controllers.NewLlmHealthCheckController(handlers.LLMHealthHandler, logger),
+		GenerateController:       controllers.NewGenerateController(handlers.GenerateHandler, logger),
 	}
 }

@@ -1,7 +1,9 @@
 package llm_clients
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
@@ -44,6 +46,88 @@ func NewOllamaClient(baseURL string, model string, logger zerolog.Logger) Ollama
 		limiter: rate.NewLimiter(2, 5),
 		logger:  logger,
 	}
+}
+
+func (c OllamaClient) Generate(ctx context.Context, prompt string) (string, error) {
+	c.logger.Info().Str("prompt", prompt).Msg("generate")
+
+	if err := c.limiter.Wait(ctx); err != nil {
+		c.logger.Error().Err(err).Msg("rate limit exceeded")
+		return "", err
+	}
+
+	tr := otel.Tracer("llm-api")
+	ctx, span := tr.Start(ctx, "Generate")
+	defer span.End()
+
+	result, err := c.breaker.Execute(func() (any, error) {
+		reqBody := map[string]string{
+			"model":  c.model,
+			"prompt": prompt,
+		}
+
+		b, _ := json.Marshal(reqBody)
+
+		req, err := http.NewRequestWithContext(ctx, "POST", c.baseURL+"/api/generate", bytes.NewBuffer(b))
+		if err != nil {
+			c.logger.Error().
+				Err(err).
+				Str("prompt", prompt).
+				Msg("failed to request LLM")
+			return "", err
+		}
+		req.Header.Set("Content-Type", "application/json")
+
+		resp, err := c.http.Do(req)
+		if err != nil {
+			c.logger.Error().
+				Err(err).
+				Str("prompt", prompt).
+				Msg("failed to call LLM")
+			return "", err
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode >= 400 {
+			c.logger.Error().
+				Err(err).
+				Str("prompt", prompt).
+				Int("status", resp.StatusCode).
+				Msg("failed on call LLM")
+			return "", fmt.Errorf("llm generate failed, status: %d", resp.StatusCode)
+		}
+
+		var out struct {
+			Response string `json:"response"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&out); err != nil {
+			c.logger.Error().
+				Err(err).
+				Str("prompt", prompt).
+				Msg("failed to call LLM")
+			return nil, err
+		}
+
+		return out.Response, nil
+	})
+
+	if err != nil {
+		c.logger.Error().
+			Err(err).
+			Str("prompt", prompt).
+			Msg("failed to call LLM")
+		return "", err
+	}
+
+	response, ok := result.(string)
+	if !ok {
+		c.logger.Error().
+			Str("type", fmt.Sprintf("%T", result)).
+			Msg("wrong LLM response")
+		return "", fmt.Errorf("unexpected response type: %T", result)
+	}
+
+	return response, nil
 }
 
 func (c OllamaClient) Health(ctx context.Context) error {
