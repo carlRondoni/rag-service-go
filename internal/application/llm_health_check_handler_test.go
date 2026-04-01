@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"rag-service-go/internal/application"
+	"rag-service-go/internal/domain"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -27,6 +28,10 @@ func (m *mockLLMHealthCheck) Generate(ctx context.Context, prompt string) (strin
 }
 
 func (m *mockLLMHealthCheck) Stream(ctx context.Context, prompt string) (<-chan string, error) {
+	panic("not used")
+}
+
+func (m *mockLLMHealthCheck) Embed(ctx context.Context, texts []string) ([]domain.Embedding, error) {
 	panic("not used")
 }
 

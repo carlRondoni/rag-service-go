@@ -10,6 +10,7 @@ type Controllers struct {
 	HealthCheckController    controllers.HealthCheckController
 	LlmHealthCheckController controllers.LlmHealthCheckController
 	GenerateController       controllers.GenerateController
+	IngestController         controllers.IngestController
 }
 
 func NewControllers(handlers Handlers, logger zerolog.Logger) Controllers {
@@ -17,5 +18,6 @@ func NewControllers(handlers Handlers, logger zerolog.Logger) Controllers {
 		HealthCheckController:    controllers.NewHealthCheckController(logger),
 		LlmHealthCheckController: controllers.NewLlmHealthCheckController(handlers.LLMHealthHandler, logger),
 		GenerateController:       controllers.NewGenerateController(handlers.GenerateHandler, logger),
+		IngestController:         controllers.NewIngestController(handlers.IngestHandler, logger),
 	}
 }

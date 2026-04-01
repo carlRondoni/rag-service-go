@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"rag-service-go/internal/domain"
 	"time"
 
 	"github.com/rs/zerolog"
@@ -176,4 +177,52 @@ func (c OllamaClient) Health(ctx context.Context) error {
 	})
 
 	return err
+}
+
+func (o OllamaClient) Embed(
+	ctx context.Context,
+	texts []string,
+) ([]domain.Embedding, error) {
+
+	type inputRequest struct {
+		Model string `json:"model"`
+		Input string `json:"input"`
+	}
+
+	type embeddingResponse struct {
+		Embedding []float32 `json:"embedding"`
+	}
+
+	var embeddingResult []domain.Embedding
+
+	for _, text := range texts {
+		reqBody := inputRequest{
+			Model: o.model,
+			Input: text,
+		}
+
+		b, _ := json.Marshal(reqBody)
+
+		url := fmt.Sprintf("%s/api/embeddings", o.baseURL)
+
+		req, _ := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(b))
+		req.Header.Set("Content-Type", "application/json")
+
+		resp, err := o.http.Do(req)
+		if err != nil {
+			return nil, err
+		}
+		defer resp.Body.Close()
+
+		var r embeddingResponse
+		if err := json.NewDecoder(resp.Body).Decode(&r); err != nil {
+			return nil, err
+		}
+
+		embeddingResult = append(embeddingResult, domain.Embedding{
+			Vector: r.Embedding,
+		})
+	}
+
+	return embeddingResult, nil
 }
