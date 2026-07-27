@@ -138,23 +138,19 @@ func (q *QdrantStore) Search(
 }
 
 func (q *QdrantStore) Health(ctx context.Context) error {
-	q.logger.Info().Msg("Checking Qdrant health")
 	url := fmt.Sprintf("%s/collections", q.baseURL)
 
 	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 
 	resp, err := q.client.Do(req)
 	if err != nil {
-		q.logger.Error().Err(err).Msg("qdrant error")
 		return err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode >= 300 {
-		q.logger.Error().Int("status", resp.StatusCode).Msg("qdrant error")
 		return fmt.Errorf("qdrant error: %d", resp.StatusCode)
 	}
 
-	q.logger.Info().Msg("Qdrant health check successful")
 	return nil
 }

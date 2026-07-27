@@ -7,14 +7,18 @@ discovery.docker "local" {
   host = "unix:///var/run/docker.sock"
 }
 
+discovery.relabel "docker_logs" {
+  targets = discovery.docker.local.targets
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/(.*)"
+    target_label  = "service_name"
+  }
+}
+
 loki.source.docker "app_logs" {
   host = "unix:///var/run/docker.sock"
-  targets = discovery.docker.local.targets
-
-  labels = {
-    app = "rag-backend-api",
-  }
-
+  targets = discovery.relabel.docker_logs.output
   forward_to = [loki.write.loki.receiver]
 }
 
