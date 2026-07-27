@@ -7,19 +7,30 @@ import (
 	"fmt"
 	"net/http"
 	"rag-service-go/internal/domain"
+	"time"
+
+	"github.com/rs/zerolog"
 )
 
 type QdrantStore struct {
 	baseURL    string
 	collection string
 	client     *http.Client
+	logger     zerolog.Logger
 }
 
-func NewQdrantStore(baseURL, collection string) *QdrantStore {
+func NewQdrantStore(
+	baseURL,
+	collection string,
+	logger zerolog.Logger,
+) *QdrantStore {
 	return &QdrantStore{
 		baseURL:    baseURL,
 		collection: collection,
-		client:     &http.Client{},
+		client: &http.Client{
+			Timeout: 2 * time.Minute,
+		},
+		logger: logger,
 	}
 }
 
@@ -28,7 +39,6 @@ func (q *QdrantStore) UpsertChunks(
 	chunks []domain.Chunk,
 	embeddings []domain.Embedding,
 ) error {
-
 	type point struct {
 		ID      string                 `json:"id"`
 		Vector  []float32              `json:"vector"`
@@ -125,4 +135,26 @@ func (q *QdrantStore) Search(
 	}
 
 	return results, nil
+}
+
+func (q *QdrantStore) Health(ctx context.Context) error {
+	q.logger.Info().Msg("Checking Qdrant health")
+	url := fmt.Sprintf("%s/collections", q.baseURL)
+
+	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+
+	resp, err := q.client.Do(req)
+	if err != nil {
+		q.logger.Error().Err(err).Msg("qdrant error")
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 300 {
+		q.logger.Error().Int("status", resp.StatusCode).Msg("qdrant error")
+		return fmt.Errorf("qdrant error: %d", resp.StatusCode)
+	}
+
+	q.logger.Info().Msg("Qdrant health check successful")
+	return nil
 }

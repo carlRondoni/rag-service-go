@@ -6,10 +6,15 @@ import (
 )
 
 func InitRoutes(controllers service_container.Controllers) {
-	// health checks
+	// basic routes
 	http.Handle("/health", http.HandlerFunc(controllers.HealthCheckController.Execute))
-	http.Handle("/health/llm", http.HandlerFunc(controllers.LlmHealthCheckController.Execute))
 
+	// RAG routes
 	http.Handle("/ingest", http.HandlerFunc(controllers.IngestController.Execute))
+	http.Handle("/db/health", http.HandlerFunc(controllers.DbHealthController.Execute))
+
+	// LLM routes
 	http.Handle("/llm/generate", http.HandlerFunc(controllers.GenerateController.Execute))
+	http.Handle("/llm/health", http.HandlerFunc(controllers.LlmHealthCheckController.Execute))
+
 }

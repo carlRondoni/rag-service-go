@@ -10,7 +10,8 @@ type ServiceContainer struct {
 func NewServiceContainer() ServiceContainer {
 	logger := InitLogs()
 	llmClients := NewLLMClients(logger)
-	handlers := NewHandlers(llmClients)
+	vectorStores := NewVectorStores(logger)
+	handlers := NewHandlers(llmClients, vectorStores)
 	controllers := NewControllers(handlers, logger)
 
 	return ServiceContainer{

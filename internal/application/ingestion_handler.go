@@ -11,8 +11,10 @@ type IngestHandler struct {
 	llmClient domain.LLMClient
 }
 
-func NewIngestHandler() IngestHandler {
-	return IngestHandler{}
+func NewIngestHandler(
+) IngestHandler {
+	return IngestHandler{
+	}
 }
 
 func (h IngestHandler) Handle(

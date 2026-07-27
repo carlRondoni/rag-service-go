@@ -11,6 +11,7 @@ type Controllers struct {
 	LlmHealthCheckController controllers.LlmHealthCheckController
 	GenerateController       controllers.GenerateController
 	IngestController         controllers.IngestController
+	DbHealthController       controllers.DbHealthController
 }
 
 func NewControllers(handlers Handlers, logger zerolog.Logger) Controllers {
@@ -19,5 +20,6 @@ func NewControllers(handlers Handlers, logger zerolog.Logger) Controllers {
 		LlmHealthCheckController: controllers.NewLlmHealthCheckController(handlers.LLMHealthHandler, logger),
 		GenerateController:       controllers.NewGenerateController(handlers.GenerateHandler, logger),
 		IngestController:         controllers.NewIngestController(handlers.IngestHandler, logger),
+		DbHealthController:       controllers.NewDbHealthController(handlers.DbHealthHandler, logger),
 	}
 }
