@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const keyLLmHealthCheckConst = "key"
+const keyLLmHealthCheckConst string = "key"
 
 type mockLLMHealthCheck struct {
 	called bool

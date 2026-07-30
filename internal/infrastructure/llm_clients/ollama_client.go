@@ -87,7 +87,12 @@ func (c OllamaClient) Generate(ctx context.Context, prompt string) (string, erro
 				Msg("failed to call LLM")
 			return "", err
 		}
-		defer resp.Body.Close()
+		defer func() {
+			err := resp.Body.Close()
+			if err != nil {
+				c.logger.Error().Err(err).Msg("error closing response body")
+			}
+		}()
 
 		if resp.StatusCode >= 400 {
 			c.logger.Error().
@@ -164,7 +169,12 @@ func (c OllamaClient) Health(ctx context.Context) error {
 				Msg("failed to call LLM")
 			return nil, err
 		}
-		defer resp.Body.Close()
+		defer func() {
+			err := resp.Body.Close()
+			if err != nil {
+				c.logger.Error().Err(err).Msg("error closing response body")
+			}
+		}()
 
 		if resp.StatusCode >= 500 {
 			c.logger.Error().
@@ -212,7 +222,12 @@ func (o OllamaClient) Embed(
 		if err != nil {
 			return nil, err
 		}
-		defer resp.Body.Close()
+		defer func() {
+			err := resp.Body.Close()
+			if err != nil {
+				o.logger.Error().Err(err).Msg("error closing response body")
+			}
+		}()
 
 		var r embeddingResponse
 		if err := json.NewDecoder(resp.Body).Decode(&r); err != nil {
