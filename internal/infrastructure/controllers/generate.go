@@ -51,16 +51,24 @@ func (c GenerateController) Execute(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		c.logger.Error().Err(err).Msg("generate error: error on handler: " + err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]string{
+		err = json.NewEncoder(w).Encode(map[string]string{
 			"error": err.Error(),
 		})
+		if err != nil {
+			c.logger.Error().Err(err).Msg("generate error: failed to encode response")
+			return
+		}
 
 		return
 	}
 
 	c.logger.Info().Msg("generate OK")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]string{
+	err = json.NewEncoder(w).Encode(map[string]string{
 		"response": resp,
 	})
+	if err != nil {
+		c.logger.Error().Err(err).Msg("generate error: failed to encode response")
+		return
+	}
 }

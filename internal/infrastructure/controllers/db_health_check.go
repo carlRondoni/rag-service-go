@@ -31,17 +31,25 @@ func (c DbHealthController) Execute(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		c.logger.Error().Err(err).Msg("db health check error: db down")
 		w.WriteHeader(http.StatusServiceUnavailable)
-		json.NewEncoder(w).Encode(map[string]any{
+		err = json.NewEncoder(w).Encode(map[string]any{
 			"status": "degraded",
 			"db":     "down",
 		})
+		if err != nil {
+			c.logger.Error().Err(err).Msg("db health check error: failed to encode response")
+			return
+		}
 		return
 	}
 
 	c.logger.Info().Msg("db health check OK")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]any{
+	err = json.NewEncoder(w).Encode(map[string]any{
 		"status": "ok",
 		"db":     "up",
 	})
+	if err != nil {
+		c.logger.Error().Err(err).Msg("db health check error: failed to encode response")
+		return
+	}
 }

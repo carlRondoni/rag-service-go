@@ -10,6 +10,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const keyGenerateConst = "key"
+
 type mockLLMGenerateTest struct {
 	generateFn func(ctx context.Context, prompt string) (string, error)
 }
@@ -68,14 +70,14 @@ func TestGenerateHandler_ErrorPropagation(t *testing.T) {
 func TestGenerateHandler_ContextForwarded(t *testing.T) {
 	mock := mockLLMGenerateTest{
 		generateFn: func(ctx context.Context, prompt string) (string, error) {
-			assert.Equal(t, "value", ctx.Value("key"))
+			assert.Equal(t, "value", ctx.Value(keyGenerateConst))
 			return "ok", nil
 		},
 	}
 
 	h := application.NewGenerateHandler(mock)
 
-	ctx := context.WithValue(context.Background(), "key", "value")
+	ctx := context.WithValue(context.Background(), keyGenerateConst, "value")
 
 	_, _ = h.Handle(ctx, "hi")
 }

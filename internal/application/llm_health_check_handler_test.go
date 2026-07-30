@@ -11,6 +11,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const keyLLmHealthCheckConst = "key"
+
 type mockLLMHealthCheck struct {
 	called bool
 	ctx    context.Context
@@ -39,12 +41,12 @@ func TestLLMHealthCheckHandler_CallsClient(t *testing.T) {
 	mock := &mockLLMHealthCheck{}
 	h := application.NewLLMHealthCheckHandler(mock)
 
-	ctx := context.WithValue(context.Background(), "k", "v")
+	ctx := context.WithValue(context.Background(), keyLLmHealthCheckConst, "value")
 
 	err := h.Handle(ctx)
 	assert.NoError(t, err)
 	assert.True(t, mock.called)
-	assert.Equal(t, "v", mock.ctx.Value("k"))
+	assert.Equal(t, "value", mock.ctx.Value(keyLLmHealthCheckConst))
 }
 
 func TestLLMHealthCheckHandler_ReturnsError(t *testing.T) {

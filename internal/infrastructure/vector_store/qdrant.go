@@ -73,7 +73,12 @@ func (q *QdrantStore) UpsertChunks(
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		err := resp.Body.Close()
+		if err != nil {
+			q.logger.Error().Err(err).Msg("error closing response body")
+		}
+	}()
 
 	if resp.StatusCode >= 300 {
 		return fmt.Errorf("qdrant error: %d", resp.StatusCode)
@@ -104,7 +109,12 @@ func (q *QdrantStore) Search(
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		err := resp.Body.Close()
+		if err != nil {
+			q.logger.Error().Err(err).Msg("error closing response body")
+		}
+	}()
 
 	var raw struct {
 		Result []struct {
@@ -146,7 +156,12 @@ func (q *QdrantStore) Health(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		err := resp.Body.Close()
+		if err != nil {
+			q.logger.Error().Err(err).Msg("error closing response body")
+		}
+	}()
 
 	if resp.StatusCode >= 300 {
 		return fmt.Errorf("qdrant error: %d", resp.StatusCode)

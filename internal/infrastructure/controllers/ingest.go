@@ -57,9 +57,13 @@ func (c IngestController) Execute(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		c.logger.Error().Err(err).Msg("ingest error: error on handler: " + err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]string{
+		err = json.NewEncoder(w).Encode(map[string]string{
 			"error": err.Error(),
 		})
+		if err != nil {
+			c.logger.Error().Err(err).Msg("ingest error: failed to encode response")
+			return
+		}
 
 		return
 	}

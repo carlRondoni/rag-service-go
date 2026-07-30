@@ -49,7 +49,12 @@ func TestDbHealthController_Success(t *testing.T) {
 	controller.Execute(w, req)
 
 	res := w.Result()
-	defer res.Body.Close()
+	defer func() {
+		err := res.Body.Close()
+		if err != nil {
+			t.Errorf("error closing response body: %v", err)
+		}
+	}()
 
 	assert.Equal(t, http.StatusOK, res.StatusCode)
 
