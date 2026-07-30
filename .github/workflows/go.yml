@@ -11,22 +11,55 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Set up Go
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@v7
         with:
           go-version: '1.26'
           cache: true
 
       - name: Install dependencies
         run: go mod download
+      
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v9
+        with:
+          version: latest
+
+      - name: Build
+        run: go build -v ./...
 
       - name: Run tests with coverage
-        run: go test -v -coverprofile=coverage.out ./...
+        run: go test ./... -covermode=count -coverprofile=coverage.out fmt
 
-      - name: Show coverage
-        run: go tool cover -func=coverage.out
+      - name: Show coverage summary
+        run: go tool cover -func=coverage.out -o=coverage.out
+
+      - name: Generate Coverage Badge
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: tj-actions/coverage-badge-go@v3
+        with:
+          filename: coverage.out
+          text: coverage
+      
+      - name: Verify Changed files
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: tj-actions/verify-changed-files@v20
+        id: verify-changed-files
+        with:
+          files: README.md
+
+      - name: Commit changes
+        if: steps.verify-changed-files.outputs.files_changed == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add README.md
+          git commit -m "chore: Updated coverage badge."
+          git push

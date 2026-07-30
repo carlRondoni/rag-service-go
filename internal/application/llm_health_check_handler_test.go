@@ -6,9 +6,14 @@ import (
 	"testing"
 
 	"rag-service-go/internal/application"
+	"rag-service-go/internal/domain"
 
 	"github.com/stretchr/testify/assert"
 )
+
+type ctxKey string
+
+const keyLLmHealthCheckConst ctxKey = "key"
 
 type mockLLMHealthCheck struct {
 	called bool
@@ -30,16 +35,20 @@ func (m *mockLLMHealthCheck) Stream(ctx context.Context, prompt string) (<-chan 
 	panic("not used")
 }
 
+func (m *mockLLMHealthCheck) Embed(ctx context.Context, texts []string) ([]domain.Embedding, error) {
+	panic("not used")
+}
+
 func TestLLMHealthCheckHandler_CallsClient(t *testing.T) {
 	mock := &mockLLMHealthCheck{}
 	h := application.NewLLMHealthCheckHandler(mock)
 
-	ctx := context.WithValue(context.Background(), "k", "v")
+	ctx := context.WithValue(context.Background(), keyLLmHealthCheckConst, "value")
 
 	err := h.Handle(ctx)
 	assert.NoError(t, err)
 	assert.True(t, mock.called)
-	assert.Equal(t, "v", mock.ctx.Value("k"))
+	assert.Equal(t, "value", mock.ctx.Value(keyLLmHealthCheckConst))
 }
 
 func TestLLMHealthCheckHandler_ReturnsError(t *testing.T) {
