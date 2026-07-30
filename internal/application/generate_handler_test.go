@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const keyGenerateConst string = "key"
+const keyGenerateConst ctxKey = "key"
 
 type mockLLMGenerateTest struct {
 	generateFn func(ctx context.Context, prompt string) (string, error)
