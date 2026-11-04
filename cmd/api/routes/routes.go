@@ -14,7 +14,6 @@ func InitRoutes(controllers service_container.Controllers) {
 	http.Handle("/db/health", http.HandlerFunc(controllers.DbHealthController.Execute))
 
 	// LLM routes
-	http.Handle("/llm/generate", http.HandlerFunc(controllers.GenerateController.Execute))
+	http.Handle("/generate", http.HandlerFunc(controllers.GenerateController.Execute))
 	http.Handle("/llm/health", http.HandlerFunc(controllers.LlmHealthCheckController.Execute))
-
 }

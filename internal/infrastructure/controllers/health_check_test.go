@@ -1,3 +1,5 @@
+//go:build unit || !integration
+
 package controllers_test
 
 import (
@@ -12,7 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestHealthCheckController_Integration(t *testing.T) {
+func TestHealthCheckController_Success(t *testing.T) {
 	logger := zerolog.New(os.Stdout)
 	controller := controllers.NewHealthCheckController(logger)
 

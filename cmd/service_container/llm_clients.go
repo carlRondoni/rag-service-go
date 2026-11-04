@@ -18,6 +18,6 @@ func NewLLMClients(logger zerolog.Logger) LLMClients {
 	}
 
 	return LLMClients{
-		OllamaClient: llm_clients.NewOllamaClient(url, "llama3", logger),
+		OllamaClient: llm_clients.NewOllamaClient(url, "llama3", "nomic-embed-text", logger),
 	}
 }
