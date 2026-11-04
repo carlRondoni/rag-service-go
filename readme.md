@@ -1,5 +1,7 @@
 # RAG Service Go
 
+[![Coverage](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2FcarlRondoni%2Frag-service-go%2Fbadges%2Fcoverage.json)](https://github.com/carlRondoni/rag-service-go/actions/workflows/go.yml)
+
 A Retrieval-Augmented Generation (RAG) HTTP service written in Go. It ingests text, stores it as embeddings in [Qdrant](https://qdrant.tech/), and answers questions about it using a local LLM through [Ollama](https://ollama.com/). Nothing leaves your machine, and no API keys are needed.
 
 The service is designed to run locally. It has no authentication or API rate limiting, so don't expose it publicly.

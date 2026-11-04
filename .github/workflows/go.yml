@@ -12,7 +12,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
 
     steps:
       - name: Check out repository
@@ -39,7 +39,23 @@ jobs:
         run: go test -tags=unit ./... -covermode=count -coverprofile=coverage.out
 
       - name: Show coverage summary
-        run: go tool cover -func=coverage.out -o=coverage.out
+        run: go tool cover -func=coverage.out
+
+      # main is protected, so the badge data lives on its own branch
+      - name: Publish coverage badge
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          total=$(go tool cover -func=coverage.out | awk '/^total:/ {print $NF}')
+          pct=${total%\%}
+          color=$(awk -v p="$pct" 'BEGIN {print (p >= 70 ? "brightgreen" : p >= 50 ? "yellow" : "red")}')
+          dir=$(mktemp -d)
+          printf '{"schemaVersion":1,"label":"coverage","message":"%s","color":"%s"}\n' "$total" "$color" > "$dir/coverage.json"
+          git -C "$dir" init -q -b badges
+          git -C "$dir" add coverage.json
+          git -C "$dir" -c user.name="github-actions[bot]" -c user.email="github-actions[bot]@users.noreply.github.com" commit -q -m "chore: update coverage badge"
+          git -C "$dir" push -q -f "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" badges
 
   integration:
     runs-on: ubuntu-latest
