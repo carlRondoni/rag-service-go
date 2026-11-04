@@ -16,15 +16,16 @@ import (
 )
 
 type OllamaClient struct {
-	baseURL string
-	model   string
-	http    *http.Client
-	breaker *gobreaker.CircuitBreaker[any]
-	limiter *rate.Limiter
-	logger  zerolog.Logger
+	baseURL    string
+	model      string
+	embedModel string
+	http       *http.Client
+	breaker    *gobreaker.CircuitBreaker[any]
+	limiter    *rate.Limiter
+	logger     zerolog.Logger
 }
 
-func NewOllamaClient(baseURL string, model string, logger zerolog.Logger) OllamaClient {
+func NewOllamaClient(baseURL string, model string, embedModel string, logger zerolog.Logger) OllamaClient {
 	cbst := gobreaker.Settings{
 		Name:        "LLM",
 		MaxRequests: 1,
@@ -38,8 +39,9 @@ func NewOllamaClient(baseURL string, model string, logger zerolog.Logger) Ollama
 	cb := gobreaker.NewCircuitBreaker[any](cbst)
 
 	return OllamaClient{
-		baseURL: baseURL,
-		model:   model,
+		baseURL:    baseURL,
+		model:      model,
+		embedModel: embedModel,
 		http: &http.Client{
 			Timeout: 2 * time.Minute, // needed for first time doing requests to ollama
 		},
@@ -62,9 +64,10 @@ func (c OllamaClient) Generate(ctx context.Context, prompt string) (string, erro
 	defer span.End()
 
 	result, err := c.breaker.Execute(func() (any, error) {
-		reqBody := map[string]string{
+		reqBody := map[string]any{
 			"model":  c.model,
 			"prompt": prompt,
+			"stream": false, // the client decodes a single JSON object, not Ollama's default NDJSON stream
 		}
 
 		b, _ := json.Marshal(reqBody)
@@ -200,43 +203,64 @@ func (o OllamaClient) Embed(
 	}
 
 	type embeddingResponse struct {
-		Embedding []float32 `json:"embedding"`
+		Embeddings [][]float32 `json:"embeddings"`
 	}
 
 	var embeddingResult []domain.Embedding
 
 	for _, text := range texts {
 		reqBody := inputRequest{
-			Model: o.model,
+			Model: o.embedModel,
 			Input: text,
 		}
 
-		b, _ := json.Marshal(reqBody)
+		b, err := json.Marshal(reqBody)
+		if err != nil {
+			return nil, err
+		}
 
-		url := fmt.Sprintf("%s/api/embeddings", o.baseURL)
+		url := fmt.Sprintf("%s/api/embed", o.baseURL)
 
-		req, _ := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(b))
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(b))
+		if err != nil {
+			return nil, err
+		}
 		req.Header.Set("Content-Type", "application/json")
 
 		resp, err := o.http.Do(req)
 		if err != nil {
 			return nil, err
 		}
-		defer func() {
-			err := resp.Body.Close()
-			if err != nil {
-				o.logger.Error().Err(err).Msg("error closing response body")
+
+		decodeErr := func() error {
+			defer func() {
+				if closeErr := resp.Body.Close(); closeErr != nil {
+					o.logger.Error().Err(closeErr).Msg("error closing response body")
+				}
+			}()
+
+			if resp.StatusCode >= 400 {
+				return fmt.Errorf("ollama embed failed, status: %d", resp.StatusCode)
 			}
+
+			var r embeddingResponse
+			if err := json.NewDecoder(resp.Body).Decode(&r); err != nil {
+				return err
+			}
+
+			if len(r.Embeddings) != 1 || len(r.Embeddings[0]) == 0 {
+				return fmt.Errorf("ollama embed returned no vector for model %s", o.embedModel)
+			}
+
+			embeddingResult = append(embeddingResult, domain.Embedding{
+				Vector: r.Embeddings[0],
+			})
+			return nil
 		}()
 
-		var r embeddingResponse
-		if err := json.NewDecoder(resp.Body).Decode(&r); err != nil {
-			return nil, err
+		if decodeErr != nil {
+			return nil, decodeErr
 		}
-
-		embeddingResult = append(embeddingResult, domain.Embedding{
-			Vector: r.Embedding,
-		})
 	}
 
 	return embeddingResult, nil

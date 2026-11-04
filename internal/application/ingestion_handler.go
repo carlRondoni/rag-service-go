@@ -12,8 +12,14 @@ type IngestHandler struct {
 }
 
 func NewIngestHandler(
+	chunker domain.Chunker,
+	store domain.VectorStore,
+	llmClient domain.LLMClient,
 ) IngestHandler {
 	return IngestHandler{
+		chunker:   chunker,
+		store:     store,
+		llmClient: llmClient,
 	}
 }
 
@@ -25,6 +31,9 @@ func (h IngestHandler) Handle(
 	chunks, err := h.chunker.Chunk(text, documentID)
 	if err != nil {
 		return err
+	}
+	if len(chunks) == 0 {
+		return nil
 	}
 
 	texts := make([]string, 0, len(chunks))

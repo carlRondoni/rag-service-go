@@ -95,9 +95,34 @@ This project adheres to **Clean Architecture** to ensure testability and decoupl
 **Key Technologies:**
 - **Go** (Golang)
 - **[Qdrant](https://qdrant.tech/)** (Vector Search Engine)
-- **[Ollama](https://ollama.com/)** (Local LLM Inference and Embeddings)
+- **[Ollama](https://ollama.com/)** (Local inference: `llama3` for generation, `nomic-embed-text` for embeddings)
 - **Observability**: [Loki](https://grafana.com/oss/loki/) & Alloy (for structured logging & metrics)
 - **Testing**: `httptest`, `testify/mock`, and Integration Tests.
+
+## Testing
+
+The test suite is separated into **Unit** and **Integration** tests using Go build tags (`//go:build unit` and `//go:build integration`):
+
+- **Unit Tests**: Fast in-memory tests with mocks (no Docker required):
+  ```bash
+  make test-unit
+  ```
+- **Integration Tests**: Tests against real running Docker services (Qdrant & Ollama):
+  ```bash
+  # 1. Start local Docker infrastructure
+  make local-complete-first-start
+
+  # 2. Rebuild the API and run integration tests (no mocks)
+  make test-integration
+  ```
+- **All Tests**:
+  ```bash
+  make test
+  ```
+- **Coverage Summary**:
+  ```bash
+  make test-coverage
+  ```
 
 ## Features
 

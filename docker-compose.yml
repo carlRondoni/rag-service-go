@@ -7,14 +7,16 @@ services:
       - "8080:8080"
     environment:
       QDRANT_URL: http://qdrant:6333
-      QDRANT_COLLECTION: collections
+      QDRANT_COLLECTION: documents
       OLLAMA_URL: http://ollama:11434
       LOG_LEVEL: info
     logging:
       driver: "json-file"
     depends_on:
-      - qdrant
-      - ollama
+      qdrant:
+        condition: service_healthy
+      ollama:
+        condition: service_healthy
     networks:
       - observability
 
@@ -25,6 +27,12 @@ services:
       - "6333:6333"
     volumes:
       - qdrant_data:/qdrant/storage
+    healthcheck:
+      test: ["CMD", "bash", "-c", ":> /dev/tcp/localhost/6333"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
     networks:
       - observability
 
@@ -35,6 +43,12 @@ services:
       - "11434:11434"
     volumes:
       - ollama_data:/root/.ollama
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
     networks:
       - observability
 
@@ -62,11 +76,7 @@ services:
       - ./loki-config.yaml:/etc/loki/local-config.yaml
     ports:
       - "3100:3100"
-    healthcheck:
-      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:3100/ready" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+    # No healthcheck: the image has no shell or HTTP client. Check GET /ready from the host.
     restart: unless-stopped
     networks:
       - observability
