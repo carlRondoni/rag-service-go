@@ -111,7 +111,7 @@ jobs:
           curl -sSf --max-time 900 "$OLLAMA_URL/api/pull" -d '{"model":"llama3","stream":false}'
           curl -sSf --max-time 300 "$OLLAMA_URL/api/pull" -d '{"model":"nomic-embed-text","stream":false}'
 
-      # Loading llama3 on a CPU runner is slow and the tests have 90s timeouts.
+      # slow on CPU, and the tests time out at 90s
       - name: Load llama3 into memory
         run: curl -sSf --max-time 600 "$OLLAMA_URL/api/generate" -d '{"model":"llama3","prompt":"hi","stream":false}' -o /dev/null
 
@@ -120,7 +120,7 @@ jobs:
           go build -o "$RUNNER_TEMP/rag-api" ./cmd/api
           nohup "$RUNNER_TEMP/rag-api" > "$RUNNER_TEMP/rag-api.log" 2>&1 &
 
-      # -p 1 stops test packages from competing for the runner's CPU.
+      # one package at a time, they all hit the same CPU
       - name: Run integration tests
         run: go test -v -p 1 -tags=integration ./...
 

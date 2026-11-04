@@ -48,20 +48,17 @@ func TestOllamaClient_Integration(t *testing.T) {
 
 	client := llm_clients.NewOllamaClient(baseURL, model, embedModel, logger)
 
-	// 1. Test Health
 	err := client.Health(ctx)
 	require.NoError(t, err, "Ollama must be running at %s for integration tests (start via make docker-start)", baseURL)
 
-	// 2. Test Embed
 	texts := []string{"Clean Architecture in Go"}
 	embs, err := client.Embed(ctx, texts)
 	require.NoError(t, err, "Failed to get embeddings from Ollama for model %s", embedModel)
 	require.Len(t, embs, 1)
 	assert.NotEmpty(t, embs[0].Vector, "Embedding vector should not be empty")
 
-	// 3. Test Generate
 	response, err := client.Generate(ctx, "Answer with the single word 'PONG': PING")
 	require.NoError(t, err, "Failed to generate text from Ollama")
-	// A truncated streamed response would only contain the first fragment, e.g. "P".
+	// with streaming on, this would only be the first fragment ("P")
 	assert.Contains(t, strings.ToUpper(response), "PONG")
 }

@@ -67,7 +67,7 @@ func (c OllamaClient) Generate(ctx context.Context, prompt string) (string, erro
 		reqBody := map[string]any{
 			"model":  c.model,
 			"prompt": prompt,
-			"stream": false, // the client decodes a single JSON object, not Ollama's default NDJSON stream
+			"stream": false, // ollama streams NDJSON by default
 		}
 
 		b, _ := json.Marshal(reqBody)

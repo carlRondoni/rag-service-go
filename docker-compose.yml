@@ -76,7 +76,7 @@ services:
       - ./loki-config.yaml:/etc/loki/local-config.yaml
     ports:
       - "3100:3100"
-    # No healthcheck: the image has no shell or HTTP client. Check GET /ready from the host.
+    # no healthcheck: the image has no shell or http client
     restart: unless-stopped
     networks:
       - observability

@@ -24,7 +24,6 @@ func NewGenerateHandler(
 }
 
 func (h GenerateHandler) Handle(ctx context.Context, prompt string) (string, error) {
-	// 1. Generate embedding for query prompt
 	queryEmbs, err := h.llmClient.Embed(ctx, []string{prompt})
 	if err != nil {
 		return "", fmt.Errorf("failed to embed query prompt: %w", err)
@@ -33,14 +32,12 @@ func (h GenerateHandler) Handle(ctx context.Context, prompt string) (string, err
 		return "", fmt.Errorf("no embedding returned for query prompt")
 	}
 
-	// 2. Search for relevant chunks in the vector store
 	const topK = 3
 	searchResults, err := h.vectorStore.Search(ctx, queryEmbs[0], topK)
 	if err != nil {
 		return "", fmt.Errorf("failed to search vector store: %w", err)
 	}
 
-	// 3. Construct prompt: if context chunks exist, augment with retrieved context
 	finalPrompt := prompt
 	if len(searchResults) > 0 {
 		var contextBuilder strings.Builder
@@ -56,6 +53,5 @@ func (h GenerateHandler) Handle(ctx context.Context, prompt string) (string, err
 		Answer:`, contextBuilder.String(), prompt)
 	}
 
-	// 4. Generate response using LLM
 	return h.llmClient.Generate(ctx, finalPrompt)
 }

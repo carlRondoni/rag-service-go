@@ -17,8 +17,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// getAPIBaseURL waits for the real API (the rag-api container by default).
-// `make test-integration` rebuilds it, so the test runs against the current code.
 func getAPIBaseURL(t *testing.T) string {
 	t.Helper()
 
@@ -44,7 +42,6 @@ func TestRAGPipeline_E2E_Integration(t *testing.T) {
 	baseURL := getAPIBaseURL(t)
 	client := &http.Client{Timeout: 90 * time.Second}
 
-	// 1. Check Server Health
 	t.Run("GET /health", func(t *testing.T) {
 		resp, err := client.Get(baseURL + "/health")
 		require.NoError(t, err)
@@ -52,7 +49,6 @@ func TestRAGPipeline_E2E_Integration(t *testing.T) {
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 	})
 
-	// 2. Check Qdrant Health
 	t.Run("GET /db/health", func(t *testing.T) {
 		resp, err := client.Get(baseURL + "/db/health")
 		require.NoError(t, err)
@@ -66,7 +62,6 @@ func TestRAGPipeline_E2E_Integration(t *testing.T) {
 		assert.Equal(t, "up", body["db"])
 	})
 
-	// 3. Check Ollama Health
 	t.Run("GET /llm/health", func(t *testing.T) {
 		resp, err := client.Get(baseURL + "/llm/health")
 		require.NoError(t, err)
@@ -80,9 +75,8 @@ func TestRAGPipeline_E2E_Integration(t *testing.T) {
 		assert.Equal(t, "up", body["llm"])
 	})
 
-	// 4. Ingest a specific unique document
 	documentID := fmt.Sprintf("doc-e2e-%d", time.Now().UnixNano())
-	textToIngest := "Project Antigravity is a specialized autonomous development system developed by Google."
+	textToIngest := "Blood Lotus of Kzarr is a gonzo old-school RPG zine where you draw Magic: The Gathering cards to roll mutations, written by a wizard called Thrax the Unwashed."
 
 	t.Run("POST /ingest", func(t *testing.T) {
 		payload := map[string]string{
@@ -103,13 +97,12 @@ func TestRAGPipeline_E2E_Integration(t *testing.T) {
 		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 	})
 
-	// Brief wait to ensure vector store indexes the point
+	// let qdrant index the point
 	time.Sleep(1 * time.Second)
 
-	// 5. Query with RAG and verify retrieval augmented response
 	t.Run("POST /generate with RAG Context", func(t *testing.T) {
 		payload := map[string]string{
-			"prompt": "Who developed Project Antigravity according to the context?",
+			"prompt": "Who wrote Blood Lotus of Kzarr according to the context?",
 		}
 		b, err := json.Marshal(payload)
 		require.NoError(t, err)
@@ -131,8 +124,7 @@ func TestRAGPipeline_E2E_Integration(t *testing.T) {
 		require.NoError(t, err)
 		assert.NotEmpty(t, result.Response)
 
-		// The LLM response should mention Google based on the ingested context
-		assert.True(t, strings.Contains(strings.ToLower(result.Response), "google"),
-			"Expected response to contain 'google' based on context, got: %s", result.Response)
+		assert.True(t, strings.Contains(strings.ToLower(result.Response), "thrax"),
+			"expected the answer to mention thrax, got: %s", result.Response)
 	})
 }

@@ -33,15 +33,12 @@ func TestQdrantStore_Integration(t *testing.T) {
 
 	store := vector_store.NewQdrantStore(baseURL, collection, logger)
 
-	// 1. Test Health
 	err := store.Health(ctx)
 	require.NoError(t, err, "Qdrant must be running at %s for integration tests (start via make docker-start)", baseURL)
 
-	// 2. Test EnsureCollection with vector size 3
 	err = store.EnsureCollection(ctx, 3)
 	require.NoError(t, err)
 
-	// 3. Test UpsertChunks with real point
 	chunks := []domain.Chunk{
 		{
 			ID:         "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
@@ -62,10 +59,9 @@ func TestQdrantStore_Integration(t *testing.T) {
 	err = store.UpsertChunks(ctx, chunks, embeddings)
 	require.NoError(t, err)
 
-	// Give Qdrant a brief moment to index
+	// let qdrant index the points
 	time.Sleep(500 * time.Millisecond)
 
-	// 4. Test Search (search with vector closer to Go chunk)
 	query := domain.Embedding{Vector: []float32{0.9, 0.1, 0.0}}
 	results, err := store.Search(ctx, query, 2)
 	require.NoError(t, err)
