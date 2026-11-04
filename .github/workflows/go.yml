@@ -12,7 +12,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
 
     steps:
       - name: Check out repository
@@ -40,29 +40,6 @@ jobs:
 
       - name: Show coverage summary
         run: go tool cover -func=coverage.out -o=coverage.out
-
-      - name: Generate Coverage Badge
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: tj-actions/coverage-badge-go@v3
-        with:
-          filename: coverage.out
-          text: coverage
-      
-      - name: Verify Changed files
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: tj-actions/verify-changed-files@v20
-        id: verify-changed-files
-        with:
-          files: readme.md
-
-      - name: Commit changes
-        if: steps.verify-changed-files.outputs.files_changed == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-          git add readme.md
-          git commit -m "chore: Updated coverage badge."
-          git push
 
   integration:
     runs-on: ubuntu-latest
