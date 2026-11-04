@@ -33,7 +33,7 @@ func getAPIBaseURL(t *testing.T) string {
 		if err != nil {
 			return false
 		}
-		defer resp.Body.Close()
+		defer func() { assert.NoError(t, resp.Body.Close()) }()
 		return resp.StatusCode == http.StatusOK
 	}, 30*time.Second, 500*time.Millisecond, "API must be running at %s (start via make docker-start-build)", apiURL)
 
@@ -48,7 +48,7 @@ func TestRAGPipeline_E2E_Integration(t *testing.T) {
 	t.Run("GET /health", func(t *testing.T) {
 		resp, err := client.Get(baseURL + "/health")
 		require.NoError(t, err)
-		defer resp.Body.Close()
+		defer func() { assert.NoError(t, resp.Body.Close()) }()
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 	})
 
@@ -56,7 +56,7 @@ func TestRAGPipeline_E2E_Integration(t *testing.T) {
 	t.Run("GET /db/health", func(t *testing.T) {
 		resp, err := client.Get(baseURL + "/db/health")
 		require.NoError(t, err)
-		defer resp.Body.Close()
+		defer func() { assert.NoError(t, resp.Body.Close()) }()
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 
 		var body map[string]string
@@ -70,7 +70,7 @@ func TestRAGPipeline_E2E_Integration(t *testing.T) {
 	t.Run("GET /llm/health", func(t *testing.T) {
 		resp, err := client.Get(baseURL + "/llm/health")
 		require.NoError(t, err)
-		defer resp.Body.Close()
+		defer func() { assert.NoError(t, resp.Body.Close()) }()
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 
 		var body map[string]string
@@ -98,7 +98,7 @@ func TestRAGPipeline_E2E_Integration(t *testing.T) {
 
 		resp, err := client.Do(req)
 		require.NoError(t, err)
-		defer resp.Body.Close()
+		defer func() { assert.NoError(t, resp.Body.Close()) }()
 
 		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 	})
@@ -120,7 +120,7 @@ func TestRAGPipeline_E2E_Integration(t *testing.T) {
 
 		resp, err := client.Do(req)
 		require.NoError(t, err)
-		defer resp.Body.Close()
+		defer func() { assert.NoError(t, resp.Body.Close()) }()
 
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 

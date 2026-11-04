@@ -77,7 +77,7 @@ func TestIngestController_Success(t *testing.T) {
 	controller.Execute(w, req)
 
 	res := w.Result()
-	defer res.Body.Close()
+	defer func() { assert.NoError(t, res.Body.Close()) }()
 
 	assert.Equal(t, http.StatusAccepted, res.StatusCode)
 }
@@ -92,7 +92,7 @@ func TestIngestController_MethodNotAllowed(t *testing.T) {
 	controller.Execute(w, req)
 
 	res := w.Result()
-	defer res.Body.Close()
+	defer func() { assert.NoError(t, res.Body.Close()) }()
 
 	assert.Equal(t, http.StatusMethodNotAllowed, res.StatusCode)
 }
@@ -112,7 +112,7 @@ func TestIngestController_MissingText(t *testing.T) {
 	controller.Execute(w, req)
 
 	res := w.Result()
-	defer res.Body.Close()
+	defer func() { assert.NoError(t, res.Body.Close()) }()
 
 	assert.Equal(t, http.StatusBadRequest, res.StatusCode)
 }
@@ -139,7 +139,7 @@ func TestIngestController_HandlerError(t *testing.T) {
 	controller.Execute(w, req)
 
 	res := w.Result()
-	defer res.Body.Close()
+	defer func() { assert.NoError(t, res.Body.Close()) }()
 
 	assert.Equal(t, http.StatusInternalServerError, res.StatusCode)
 }

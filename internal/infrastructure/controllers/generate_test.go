@@ -46,7 +46,7 @@ func TestGenerateController_Success(t *testing.T) {
 	controller.Execute(w, req)
 
 	res := w.Result()
-	defer res.Body.Close()
+	defer func() { assert.NoError(t, res.Body.Close()) }()
 
 	assert.Equal(t, http.StatusOK, res.StatusCode)
 
@@ -65,7 +65,7 @@ func TestGenerateController_MethodNotAllowed(t *testing.T) {
 	controller.Execute(w, req)
 
 	res := w.Result()
-	defer res.Body.Close()
+	defer func() { assert.NoError(t, res.Body.Close()) }()
 
 	assert.Equal(t, http.StatusMethodNotAllowed, res.StatusCode)
 }
@@ -83,7 +83,7 @@ func TestGenerateController_MissingPrompt(t *testing.T) {
 	controller.Execute(w, req)
 
 	res := w.Result()
-	defer res.Body.Close()
+	defer func() { assert.NoError(t, res.Body.Close()) }()
 
 	assert.Equal(t, http.StatusBadRequest, res.StatusCode)
 }
@@ -110,7 +110,7 @@ func TestGenerateController_HandlerError(t *testing.T) {
 	controller.Execute(w, req)
 
 	res := w.Result()
-	defer res.Body.Close()
+	defer func() { assert.NoError(t, res.Body.Close()) }()
 
 	assert.Equal(t, http.StatusInternalServerError, res.StatusCode)
 }

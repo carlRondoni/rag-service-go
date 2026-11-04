@@ -45,7 +45,7 @@ func (h GenerateHandler) Handle(ctx context.Context, prompt string) (string, err
 	if len(searchResults) > 0 {
 		var contextBuilder strings.Builder
 		for i, res := range searchResults {
-			contextBuilder.WriteString(fmt.Sprintf("[Chunk %d]: %s\n", i+1, res.Chunk.Text))
+			fmt.Fprintf(&contextBuilder, "[Chunk %d]: %s\n", i+1, res.Chunk.Text)
 		}
 
 		finalPrompt = fmt.Sprintf(`Context information is below:
